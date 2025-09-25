@@ -6,46 +6,67 @@
  */
 function applyCustomSort() {
   const defaultCompare = (a, b) => {
+    if (a === undefined && b === undefined) {
+      return 0;
+    }
+
+    if (a === undefined) {
+      return 1;
+    }
+
+    if (b === undefined) {
+      return -1;
+    }
+
     const strA = String(a);
     const strB = String(b);
 
     return strA < strB ? -1 : strA > strB ? 1 : 0;
   };
 
-  [].__proto__.sort2 = function (compareFunction = defaultCompare) {
-    if (
-      compareFunction !== undefined &&
-      typeof compareFunction !== 'function'
-    ) {
-      throw new TypeError(
-        'The comparison function must be either a function or undefined',
-      );
+  [].__proto__.sort2 = function (originalCompare) {
+    let compareFn = originalCompare;
+
+    if (typeof originalCompare !== 'function') {
+      compareFn = defaultCompare;
+    } else {
+      compareFn = function (a, b) {
+        if (a === undefined && b === undefined) {
+          return 0;
+        }
+
+        if (a === undefined) {
+          return 1;
+        }
+
+        if (b === undefined) {
+          return -1;
+        }
+
+        return originalCompare(a, b);
+      };
     }
 
-    const undefinedCount = [];
+    const realValues = [];
 
-    const nonSparseValues = this.filter((el) => {
-      if (el === undefined) {
-        undefinedCount.push(el);
-
-        return false;
+    for (let i = 0; i < this.length; i++) {
+      if (i in this) {
+        realValues.push(this[i]);
       }
+    }
 
-      return true;
-    });
-
-    let n = nonSparseValues.length;
+    let n = realValues.length;
     let swapped;
 
     do {
       swapped = false;
 
       for (let i = 0; i < n - 1; i++) {
-        if (compareFunction(nonSparseValues[i], nonSparseValues[i + 1]) > 0) {
-          const temp = nonSparseValues[i];
+        if (compareFn(realValues[i], realValues[i + 1]) > 0) {
+          const temp = realValues[i];
 
-          nonSparseValues[i] = nonSparseValues[i + 1];
-          nonSparseValues[i + 1] = temp;
+          realValues[i] = realValues[i + 1];
+          realValues[i + 1] = temp;
           swapped = true;
         }
       }
@@ -56,14 +77,8 @@ function applyCustomSort() {
       delete this[i];
     }
 
-    let index = 0;
-
-    for (const value of nonSparseValues) {
-      this[index++] = value;
-    }
-
-    for (const undef of undefinedCount) {
-      this[index++] = undef;
+    for (let i = 0; i < realValues.length; i++) {
+      this[i] = realValues[i];
     }
 
     return this;
