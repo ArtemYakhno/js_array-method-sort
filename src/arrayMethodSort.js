@@ -25,36 +25,27 @@ function applyCustomSort() {
   };
 
   [].__proto__.sort2 = function (originalCompare) {
-    let compareFn = originalCompare;
+    let compareFn;
 
-    if (typeof originalCompare !== 'function') {
-      compareFn = defaultCompare;
+    if (typeof originalCompare === 'function') {
+      compareFn = originalCompare;
     } else {
-      compareFn = function (a, b) {
-        if (a === undefined && b === undefined) {
-          return 0;
-        }
-
-        if (a === undefined) {
-          return 1;
-        }
-
-        if (b === undefined) {
-          return -1;
-        }
-
-        return originalCompare(a, b);
-      };
+      compareFn = defaultCompare;
     }
 
     const realValues = [];
 
     for (let i = 0; i < this.length; i++) {
-      if (i in this) {
-        realValues.push(this[i]);
+      if (typeof originalCompare === 'function') {
+        realValues.push(this.hasOwnProperty(i) ? this[i] : undefined);
+      } else {
+        if (i in this) {
+          realValues.push(this[i]);
+        }
       }
     }
 
+    // Простий bubble sort
     let n = realValues.length;
     let swapped;
 
